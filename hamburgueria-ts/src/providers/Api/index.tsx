@@ -28,16 +28,28 @@ interface User {
   password: string;
 }
 
+interface UserLogin {
+  name: string;
+  email: string;
+  password: string;
+}
+
 interface APIProviderData {
   productList: Product[];
   cartList: CartProduct[];
   getList: () => void;
   getCart: () => void;
-  updateAmount: (itemId: number, buttonPressed: boolean) => void;
+  updateAmount: (
+    itemId: number,
+    buttonPressed: boolean,
+    amount: number,
+    fromAdd?: boolean
+  ) => void;
   addToCart: (product: Product) => void;
   deleteFromCart: (itemId: number) => void;
   login: (user: User) => void;
   logout: () => void;
+  signup: (user: UserLogin) => void;
 }
 
 const APIContext = createContext<APIProviderData>({} as APIProviderData);
@@ -67,19 +79,13 @@ export const APIProvider = ({ children }: APIProps) => {
       .catch((err) => console.log(err));
   };
 
-  const updateAmount = (itemId: number, buttonPressed: boolean) => {
-    const item = cartList.find((elt) => {
-      return elt.id === itemId;
-    });
-
-    const updatedAmount = { amount: item?.amount || 1 };
-
-    if (item && buttonPressed) {
-      updatedAmount.amount += 1;
-    }
-    if (item && !buttonPressed) {
-      updatedAmount.amount -= 1;
-    }
+  const updateAmount = (
+    itemId: number,
+    buttonPressed: boolean,
+    amount: number,
+    fromAdd?: boolean
+  ) => {
+    const updatedAmount = { amount: buttonPressed ? amount + 1 : amount - 1 };
 
     axios
       .patch(
@@ -91,6 +97,11 @@ export const APIProvider = ({ children }: APIProps) => {
           },
         }
       )
+      .then((_) => {
+        if (fromAdd) {
+          document.location.reload();
+        }
+      })
       .catch((err) => console.log(err));
   };
 
@@ -111,7 +122,7 @@ export const APIProvider = ({ children }: APIProps) => {
     });
 
     if (productCheck) {
-      updateAmount(productCheck.id, true);
+      updateAmount(productCheck.id, true, productCheck.amount, true);
     } else {
       axios
         .post("https://hamburgeria-kaueh.herokuapp.com/cart", cartProduct, {
@@ -119,6 +130,7 @@ export const APIProvider = ({ children }: APIProps) => {
             Authorization: `Bearer ${token}`,
           },
         })
+        .then((_) => document.location.reload())
         .catch((err) => console.log(err));
     }
   };
@@ -147,6 +159,12 @@ export const APIProvider = ({ children }: APIProps) => {
       });
   };
 
+  const signup = (user: UserLogin) => {
+    axios
+      .post("https://hamburgeria-kaueh.herokuapp.com/register", user)
+      .catch((err) => console.log(err));
+  };
+
   const logout = () => {
     localStorage.clear();
     document.location.reload();
@@ -164,6 +182,7 @@ export const APIProvider = ({ children }: APIProps) => {
         deleteFromCart,
         login,
         logout,
+        signup,
       }}
     >
       {children}

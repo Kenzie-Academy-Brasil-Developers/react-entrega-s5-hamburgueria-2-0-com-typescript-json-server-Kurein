@@ -15,8 +15,6 @@ const Login = () => {
 
   const token = localStorage.getItem("Hamburgueria_token");
 
-  console.log(token);
-
   if (token) {
     history.push("/");
   }
@@ -24,7 +22,8 @@ const Login = () => {
   const { login } = useAPI();
 
   const schema = yup.object().shape({
-    email: yup.string().required(),
+    email: yup.string().email("Email Inválido").required("Campo Obrigatório"),
+    password: yup.string().required("Campo Obrigatório"),
   });
 
   const {
@@ -39,6 +38,10 @@ const Login = () => {
     login(data);
   };
 
+  const toSingup = () => {
+    history.push("/singup");
+  };
+
   return (
     <Container>
       <form onSubmit={handleSubmit(onSubmitFunction)}>
@@ -48,7 +51,7 @@ const Login = () => {
         {errors.password?.message}
         <button type="submit">Logar</button>
       </form>
-      <button>Cadastre-se</button>
+      <button onClick={toSingup}>Cadastre-se</button>
     </Container>
   );
 };
